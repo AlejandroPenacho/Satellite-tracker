@@ -1,3 +1,6 @@
+
+addpath(genpath("."));
+
 [T,X] = obtain_2D_motion([6791; 0; 0; 7.66*1.3], [0; 5600*3]);
 
 
