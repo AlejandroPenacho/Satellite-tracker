@@ -1,8 +1,8 @@
-function [T,X] = obtain_3D_motion(X_0, time_interval)
+function Z = obtain_3D_motion(X_0, time_interval)
 
     mu_earth = 398600;
 
-    [T,X] = ode45(@(t,x) simple_3D_orbital_model(t,x, mu_earth), time_interval, X_0);
+    Z = ode45(@(t,x) simple_3D_orbital_model(t,x, mu_earth), time_interval, X_0);
     
     
 end

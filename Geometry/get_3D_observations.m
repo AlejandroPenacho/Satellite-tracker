@@ -1,6 +1,5 @@
 
-
-function observations = get_observations(ground_station, particles, time)
+function observations = get_3D_observations(ground_station, particles, time)
 
     % particles: 6*N array
     % ground_station: 2*1 array (lat, long)
