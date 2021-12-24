@@ -1,18 +1,24 @@
 
 
-function observations = get_2D_observations(ground_station, particles, time)
+function [observations, detection] = get_2D_observations(ground_station, particles, time)
 
     % particles: 4*N array
-    % ground_station: 1*1 array (long)
+    % ground_station: 1*M array (long)
     % time (s)
 
-    % Output: 2*N, first row is alpha, second is beta. alpha is the angle
-    % with respect to the radial vector, moving to the north. Beta is the
+    %   Output: 
+    % Observations: 2*N*M, first row is distance, second is beta. Beta is the
     % angle moving ot the east
+    %
+    % detection: 1*N*M boolean, indicates whether particle N is seen by
+    % ground station M
+
+    n_particles = size(particles, 2);
+    n_gs = size(ground_station, 2);
 
     earth_radius = 6371;
 
-    gs_long = ground_station(2) + 2*pi/(24*3600) * time;
+    gs_long = ground_station(1,:) + 2*pi/(24*3600) * time;
 
     radial_vector = [
         cos(gs_long);
@@ -26,14 +32,18 @@ function observations = get_2D_observations(ground_station, particles, time)
 
     gs_position = earth_radius * radial_vector;
 
-    delta_x = [
-        particles(1,:) - gs_position(1);
-        particles(2,:) - gs_position(2);
-    ];
+    delta_x = repmat(particles(1:2,:),1,1,n_gs) - ...
+              repmat(reshape(gs_position,2,1,n_gs),1,n_particles,1);
+
 
     distance = vecnorm(delta_x);
 
-    beta = asin(az_vector'*delta_x./distance);
+    radial_components = pagemtimes(reshape(radial_vector,1,2,n_gs), delta_x./distance);
+    azimuthal_components = pagemtimes(reshape(az_vector,1,2,n_gs), delta_x./distance);
+
+    beta = asin(azimuthal_components);
 
     observations = [distance; beta];
+
+    detection = radial_components >= 0;
 end

@@ -3,6 +3,8 @@ classdef Predictor
     % It requires only one method: predict, that takes the particles and
     % updates their positions according to its model.
     
+    %TODO: Q should scale with timestep!!!!
+
     properties
         Q
         n_particles

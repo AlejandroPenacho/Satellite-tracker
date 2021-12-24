@@ -4,12 +4,18 @@ addpath(genpath("."));
 
 target = obtain_3D_motion([6791; 0; 0; 0; 7.66*1.3*cos(0.3); 7.66*1.3*sin(0.3)], [0; 20000]);
 
+ground_stations = { 
+    struct("location", [0; 0], "R", diag([1, 1/8000, 1/8000]));
+    struct("location", [0; pi/4], "R", diag([1, 1/8000, 1/8000]))
+                };
+
+
 
 my_filter = ParticleFilter(10000, ...
                             [6791; 0; 0; 0; 7.66*1.3*cos(0.3); 7.66*1.3*sin(0.3)], ...
                             true, ...
                             eye(6)*1, ...
-                            diag([100, 1/10000, 1/10000]), ...
+                            ground_stations, ...
                             target);
 
 
