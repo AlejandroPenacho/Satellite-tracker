@@ -2,18 +2,22 @@ clc; clear; close all
 
 addpath(genpath("."));
 
-target = obtain_2D_motion([6791; 0; 0; 7.66*1.1], [0; 20000]);
+target = obtain_2D_motion([6791; 0; 0; 7.66*1.1], [0; 40000]);
 
+dispersion_models = struct( ...
+    "standard", eye(4)/10, ...
+    "no_sight", diag([1/10000000000, 1/10000000000, 0, 0]) ...
+    );
 
 ground_stations = { 
     struct("location", 0, "R", diag([1, 1/8000]));
-    struct("location", pi/4, "R", diag([1, 1/8000]))
+    struct("location", pi/8, "R", diag([1, 1/8000]))
                 };
 
 my_filter = ParticleFilter(10000, ...
                             [6791; 0; 0; 7.66*1.3], ...
                             false, ...
-                            eye(4)/10, ...
+                            dispersion_models, ...
                             ground_stations, ...
                             target);
 
@@ -26,7 +30,7 @@ end
 
 figure
 
-for i=1:20000
+for i=1:40000
 
     my_filter = my_filter.step(1);
 
@@ -47,12 +51,12 @@ for i=1:20000
     plot(earth(1,:), earth(2,:));
     scatter(6371*cos(gs_long), 6371*sin(gs_long), 5, "g");
     plot([6371*cos(gs_long), real_one(1)], [6371*sin(gs_long), real_one(2)])
-    plot([6371*cos(gs_long + pi/4), real_one(1)], [6371*sin(gs_long + pi/4), real_one(2)])
+    plot([6371*cos(gs_long + pi/8), real_one(1)], [6371*sin(gs_long + pi/8), real_one(2)])
     hold off
     xlim([real_one(1)-100, real_one(1)+100])
     ylim([real_one(2)-100, real_one(2)+100])
-    % xlim([0, 10000])
-    % ylim([0, 10000])
+    xlim([-10000, 10000])
+    ylim([-10000, 10000])
     daspect([1 1 1])
     drawnow
 end

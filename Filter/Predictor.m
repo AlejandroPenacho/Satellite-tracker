@@ -6,14 +6,14 @@ classdef Predictor
     %TODO: Q should scale with timestep!!!!
 
     properties
-        Q
+        dispersion_models
         n_particles
         three_dimensional
         mu_earth
     end
     
     methods
-        function obj = Predictor(n_particles, Q, three_dimensional)
+        function obj = Predictor(n_particles, dispersion_models, three_dimensional)
             %PREDICTOR Construct an instance of this class
             %   Detailed explanation goes here
 
@@ -21,18 +21,24 @@ classdef Predictor
             obj.three_dimensional = three_dimensional;
             obj.n_particles = n_particles;
 
-            if three_dimensional
-                assert(size(Q,1) == 6 && size(Q,2) == 6)
-            else
-                assert(size(Q,1) == 4 && size(Q,2) == 4)
-            end
+            % if three_dimensional
+            %     assert(size(Q,1) == 6 && size(Q,2) == 6)
+            % else
+            %     assert(size(Q,1) == 4 && size(Q,2) == 4)
+            % end
 
-            obj.Q = Q;
+            obj.dispersion_models = dispersion_models;
         end
         
-        function S_bar = predict(obj, S, delta_t)
+        function [S_bar, prediction_data] = predict(obj, S, delta_t, update_data)
             % Given the current set of particles and a delta_t, update the 
             % state of the particles
+
+            if update_data.detected
+                Q = obj.dispersion_models.standard;
+            else
+                Q = obj.dispersion_models.no_sight;
+            end
 
             if ~obj.three_dimensional
                 force_factor = obj.mu_earth ./ (S(1,:).^2+S(2,:).^2).^(3/2);
@@ -45,7 +51,7 @@ classdef Predictor
                 ];
 
                 S_bar = S + S_dot*delta_t + [
-                    mvnrnd([0;0;0;0], obj.Q, obj.n_particles)'
+                    mvnrnd([0;0;0;0], Q, obj.n_particles)'
                 ];
 
             else
@@ -62,10 +68,12 @@ classdef Predictor
                 ];
 
                 S_bar = S + S_dot*delta_t + [
-                    mvnrnd([0;0;0;0;0;0], obj.Q, obj.n_particles)'
+                    mvnrnd([0;0;0;0;0;0], Q, obj.n_particles)'
                 ];
 
             end
+
+            prediction_data = {};
 
         end
     end

@@ -7,12 +7,13 @@ classdef ParticleFilter
         S
         n_particles
         time
+        last_update_data
         predictor
         updater
     end
     
     methods
-        function obj = ParticleFilter(n_particles, IC, three_dimensional, Q, ground_stations, target)
+        function obj = ParticleFilter(n_particles, IC, three_dimensional, dispersion_models, ground_stations, target)
             %PARTICLEFILTER Construct an instance of this class
             %   Detailed explanation goes here
             obj.n_particles = n_particles;
@@ -23,20 +24,25 @@ classdef ParticleFilter
 
             obj.target = target;
 
-            obj.predictor = Predictor(n_particles, Q, three_dimensional);
+            obj.predictor = Predictor(n_particles, dispersion_models, three_dimensional);
             obj.updater = Updater(n_particles, ground_stations, three_dimensional);
+
+            obj.last_update_data = struct("detected", true);
         end
         
         function obj = step(obj, delta_t)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
-            S_bar = obj.predictor.predict(obj.S, delta_t);
+
+
+            
+            [S_bar, prediction_data] = obj.predictor.predict(obj.S, delta_t, obj.last_update_data);
 
             obj.time = obj.time + delta_t;
 
             X = deval(obj.target, obj.time);
 
-            obj.S = obj.updater.update(S_bar, X, obj.time);
+            [obj.S, obj.last_update_data] = obj.updater.update(S_bar, X, obj.time, prediction_data);
         end
     end
 end

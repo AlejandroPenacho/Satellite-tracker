@@ -36,18 +36,25 @@ classdef Updater
             obj.three_dimensional = three_dimensional;
         end
 
-        function S = update(obj,S_bar, X, time)
+        function [S, update_data] = update(obj,S_bar, X, time, predict_data)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             if obj.three_dimensional
-                weights = obj.obtain_3D_weights(S_bar, X, time);
+                [weights, detected] = obj.obtain_3D_weights(S_bar, X, time);
             else
-                weights = obj.obtain_2D_weights(S_bar, X, time);
+                [weights, detected] = obj.obtain_2D_weights(S_bar, X, time);
             end
-            S = obj.resample(S_bar, weights);
+
+            if detected 
+                S = obj.resample(S_bar, weights);
+            else 
+                S = S_bar;
+            end
+
+            update_data = struct("detected", detected);
         end
 
-        function weights = obtain_2D_weights(obj, S_bar, X, time)
+        function [weights, detected] = obtain_2D_weights(obj, S_bar, X, time)
 
             % n_gs = size(obj.gs_location, 2);
             [particle_obs, particle_detection] = get_2D_observations(obj.gs_location, S_bar, time);
@@ -70,6 +77,8 @@ classdef Updater
             % are set to 0, so they do not affect psi. R is the blkdiag of
             % the R of each ground station.
 
+            detected = (sum(real_detection) > 0);
+
             Z = reshape(permute(particle_obs.*repmat(real_detection,2,obj.n_particles), [1,3,2]), [], obj.n_particles) - ...
                 repmat(reshape(real_obs.*real_detection, [], 1),1, obj.n_particles,1);
 
@@ -88,13 +97,16 @@ classdef Updater
         end
 
 
-        function weights = obtain_3D_weights(obj, S_bar, X, time)
+        function [weights, detected] = obtain_3D_weights(obj, S_bar, X, time)
 
             % n_gs = size(obj.gs_location,2);
 
             [particle_obs, particle_detection] = get_3D_observations(obj.gs_location, S_bar, time);
             [real_obs, real_detection] = get_3D_observations(obj.gs_location, X, time);
            
+
+            detected = (sum(real_detection) > 0);
+
             Z = reshape(permute(particle_obs.*repmat(real_detection,3,obj.n_particles), [1,3,2]), [], obj.n_particles) - ...
                 repmat(reshape(real_obs.*real_detection, [], 1),1, obj.n_particles,1);
 
