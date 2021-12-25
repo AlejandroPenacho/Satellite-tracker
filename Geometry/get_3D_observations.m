@@ -36,7 +36,7 @@ function [observations, detection] = get_3D_observations(ground_station, particl
     north_vector = [
         -sin(gs_lat).*cos(gs_long);
         -cos(i_earth).*sin(gs_lat).*sin(gs_long) - sin(i_earth).*cos(gs_lat);
-        -sin(i_earth).*sin(gs_lat).*sin(gs_long) + cos(i_earth).*cos(gs_long)
+        -sin(i_earth).*sin(gs_lat).*sin(gs_long) + cos(i_earth).*cos(gs_lat)
     ];
 
     gs_position = earth_radius * radial_vector;

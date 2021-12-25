@@ -36,13 +36,13 @@ classdef Updater
             obj.three_dimensional = three_dimensional;
         end
 
-        function [S, update_data] = update(obj,S_bar, X, time, predict_data)
+        function [S, update_data] = update(obj, S_bar, real_obs, real_detection, time, predict_data)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             if obj.three_dimensional
-                [weights, detected] = obj.obtain_3D_weights(S_bar, X, time);
+                [weights, detected] = obj.obtain_3D_weights(S_bar, real_obs, real_detection, time);
             else
-                [weights, detected] = obj.obtain_2D_weights(S_bar, X, time);
+                [weights, detected] = obj.obtain_2D_weights(S_bar, real_obs, real_detection, time);
             end
 
             if detected 
@@ -54,12 +54,9 @@ classdef Updater
             update_data = struct("detected", detected);
         end
 
-        function [weights, detected] = obtain_2D_weights(obj, S_bar, X, time)
+        function [weights, detected] = obtain_2D_weights(obj, S_bar, real_obs, real_detection, time)
 
-            % n_gs = size(obj.gs_location, 2);
             [particle_obs, particle_detection] = get_2D_observations(obj.gs_location, S_bar, time);
-
-            [real_obs, real_detection] = get_2D_observations(obj.gs_location, X, time);
            
 
             % One 3-dim for each ground station
@@ -97,12 +94,10 @@ classdef Updater
         end
 
 
-        function [weights, detected] = obtain_3D_weights(obj, S_bar, X, time)
+        function [weights, detected] = obtain_3D_weights(obj, S_bar, real_obs, real_detection, time)
 
-            % n_gs = size(obj.gs_location,2);
 
             [particle_obs, particle_detection] = get_3D_observations(obj.gs_location, S_bar, time);
-            [real_obs, real_detection] = get_3D_observations(obj.gs_location, X, time);
            
 
             detected = (sum(real_detection) > 0);
@@ -120,6 +115,16 @@ classdef Updater
 
             weights = psi/sum(psi);
 
+        end
+
+
+        function [real_obs, real_detection] = get_target_measurement(obj, target, time)
+
+            if obj.three_dimensional
+                [real_obs, real_detection] = get_3D_observations(obj.gs_location, target, time);
+            else
+                [real_obs, real_detection] = get_2D_observations(obj.gs_location, target, time);
+            end
         end
 
 

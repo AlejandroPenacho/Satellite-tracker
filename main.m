@@ -2,20 +2,23 @@ clc; clear; close all
 
 addpath(genpath("."));
 
-target = obtain_3D_motion([6791; 0; 0; 0; 7.66*1.3*cos(0.3); 7.66*1.3*sin(0.3)], [0; 20000]);
+IC = [12791; 0; 0; 0; 5.58*1.1*cos(0.3); 5.58*1.1*sin(0.3)];
+
+target = obtain_3D_motion(IC, [0; 20000]);
 
 ground_stations = { 
-    struct("location", [0; 0], "R", diag([1, 1/8000, 1/8000]));
-    struct("location", [0; pi/8], "R", diag([1, 1/8000, 1/8000]))
+    struct("location", [40.45*pi/180; -4.37*pi/180], "R", diag([1, 1/80000, 1/80000]));
+    struct("location", [-35.4*pi/180; 148.98*pi/180], "R", diag([1, 1/80000, 1/80000]));
+    struct("location", [35.34*pi/180; -116.87*pi/180], "R", diag([1, 1/80000, 1/80000]))
                 };
 
 dispersion_models = struct( ...
-    "standard", eye(6)/10, ...
+    "standard", eye(6)/1000, ...
     "no_sight", diag([1/10000000000, 1/10000000000, 1/10000000000, 0, 0, 0]) ...
     );
 
 my_filter = ParticleFilter(10000, ...
-                            [6791; 0; 0; 0; 7.66*1.3*cos(0.3); 7.66*1.3*sin(0.3)], ...
+                            IC, ...
                             true, ...
                             dispersion_models, ...
                             ground_stations, ...
@@ -58,16 +61,13 @@ for i=1:20000
     plot3([6371, real_one(1)], ...
          [0, real_one(2)], ...
          [0, real_one(3)])
-    plot3([6371*cos(pi/8), real_one(1)], ...
-         [6371*sin(pi/8), real_one(2)], ...
-         [0, real_one(3)])
     hold off
     xlim([real_one(1)-200, real_one(1)+200])
     ylim([real_one(2)-200, real_one(2)+200])
     zlim([real_one(3)-200, real_one(3)+200])
-    % xlim([5000, 7000])
-    % ylim([0, 1000])
-    % zlim([0, 1000])
+    % xlim([-15000, 15000])
+    % ylim([-15000, 15000])
+    % zlim([-6000, 6000])
     daspect([1 1 1])
     drawnow
 end

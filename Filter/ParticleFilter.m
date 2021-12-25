@@ -33,16 +33,18 @@ classdef ParticleFilter
         function obj = step(obj, delta_t)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
-
-
             
-            [S_bar, prediction_data] = obj.predictor.predict(obj.S, delta_t, obj.last_update_data);
-
             obj.time = obj.time + delta_t;
-
             X = deval(obj.target, obj.time);
+            
 
-            [obj.S, obj.last_update_data] = obj.updater.update(S_bar, X, obj.time, prediction_data);
+            [real_obs, real_detection] = obj.updater.get_target_measurement(X, obj.time);
+
+            detected = (sum(real_detection) > 0);
+
+            [S_bar, prediction_data] = obj.predictor.predict(obj.S, delta_t, detected);
+
+            [obj.S, obj.last_update_data] = obj.updater.update(S_bar, real_obs, real_detection, obj.time, prediction_data);
         end
     end
 end

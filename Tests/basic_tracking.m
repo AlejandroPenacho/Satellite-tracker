@@ -6,13 +6,14 @@ target = obtain_2D_motion([6791; 0; 0; 7.66*1.1], [0; 40000]);
 
 dispersion_models = struct( ...
     "standard", eye(4)/10, ...
-    "no_sight", diag([1/10000000000, 1/10000000000, 0, 0]) ...
+    "no_sight", zeros(4) ...
     );
 
 ground_stations = { 
-    struct("location", 0, "R", diag([1, 1/8000]));
-    struct("location", pi/8, "R", diag([1, 1/8000]))
-                };
+    struct("location", 0, "R", diag([1/100, 1/800000]));
+    struct("location", 2*pi/3, "R", diag([1/100, 1/800000]));
+    struct("location", 4*pi/3, "R", diag([1/100, 1/800000]))
+    };
 
 my_filter = ParticleFilter(10000, ...
                             [6791; 0; 0; 7.66*1.3], ...
@@ -51,7 +52,8 @@ for i=1:40000
     plot(earth(1,:), earth(2,:));
     scatter(6371*cos(gs_long), 6371*sin(gs_long), 5, "g");
     plot([6371*cos(gs_long), real_one(1)], [6371*sin(gs_long), real_one(2)])
-    plot([6371*cos(gs_long + pi/8), real_one(1)], [6371*sin(gs_long + pi/8), real_one(2)])
+    plot([6371*cos(gs_long + 2*pi/3), real_one(1)], [6371*sin(gs_long + 2*pi/3), real_one(2)])
+    plot([6371*cos(gs_long + 4*pi/3), real_one(1)], [6371*sin(gs_long + 4*pi/3), real_one(2)])
     hold off
     xlim([real_one(1)-100, real_one(1)+100])
     ylim([real_one(2)-100, real_one(2)+100])
