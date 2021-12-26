@@ -10,9 +10,9 @@ dispersion_models = struct( ...
     );
 
 ground_stations = { 
-    struct("location", 0, "R", diag([1/100, 1/800000]));
-    struct("location", 2*pi/3, "R", diag([1/100, 1/800000]));
-    struct("location", 4*pi/3, "R", diag([1/100, 1/800000]))
+    struct("location", 0, "R", diag([1/1000, 1/8000000]));
+    struct("location", 2*pi/3, "R", diag([1/1000, 1/8000000]));
+    struct("location", 4*pi/3, "R", diag([1/1000, 1/8000000]))
     };
 
 my_filter = ParticleFilter(10000, ...
