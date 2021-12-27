@@ -30,11 +30,11 @@ classdef Predictor
             obj.dispersion_models = dispersion_models;
         end
         
-        function [S_bar, prediction_data] = predict(obj, S, delta_t, detected)
+        function [S_bar, filter_state] = predict(obj, S, delta_t, filter_state)
             % Given the current set of particles and a delta_t, update the 
             % state of the particles
 
-            if detected
+            if sum(filter_state.active_gs) > 0
                 Q = obj.dispersion_models.standard;
             else
                 Q = obj.dispersion_models.no_sight;
@@ -72,8 +72,6 @@ classdef Predictor
                 ];
 
             end
-
-            prediction_data = {};
 
         end
     end

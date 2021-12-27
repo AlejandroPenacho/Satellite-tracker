@@ -9,10 +9,13 @@ dispersion_models = struct( ...
     "no_sight", zeros(4) ...
     );
 
+distance_precision = 0.1; %km
+angle_precision = 0.00029; %rad, equal to 1 min
+
 ground_stations = { 
-    struct("location", 0, "R", diag([1/1000, 1/8000000]));
-    struct("location", 2*pi/3, "R", diag([1/1000, 1/8000000]));
-    struct("location", 4*pi/3, "R", diag([1/1000, 1/8000000]))
+    struct("location", 0, "precision", [distance_precision; angle_precision]);
+    struct("location", 2*pi/3, "precision", [distance_precision; angle_precision]);
+    struct("location", 4*pi/3, "precision", [distance_precision; angle_precision])
     };
 
 my_filter = ParticleFilter(10000, ...
@@ -35,30 +38,35 @@ for i=1:40000
 
     my_filter = my_filter.step(1);
 
-    time = i;
-
-    gs_long =  2*pi/(24*3600) * time;
-
-    
-    X= my_filter.S(1,:);
-    Y = my_filter.S(2,:);
-    
-    real_one = deval(target, time);
-
-    scatter(real_one(1), real_one(2), 20)
-    hold on
-    scatter(X,Y, 6, "filled")
-
-    plot(earth(1,:), earth(2,:));
-    scatter(6371*cos(gs_long), 6371*sin(gs_long), 5, "g");
-    plot([6371*cos(gs_long), real_one(1)], [6371*sin(gs_long), real_one(2)])
-    plot([6371*cos(gs_long + 2*pi/3), real_one(1)], [6371*sin(gs_long + 2*pi/3), real_one(2)])
-    plot([6371*cos(gs_long + 4*pi/3), real_one(1)], [6371*sin(gs_long + 4*pi/3), real_one(2)])
-    hold off
-    xlim([real_one(1)-100, real_one(1)+100])
-    ylim([real_one(2)-100, real_one(2)+100])
+    my_filter.plot_state();
     xlim([-10000, 10000])
     ylim([-10000, 10000])
-    daspect([1 1 1])
     drawnow
+% 
+%     time = i;
+% 
+%     gs_long =  2*pi/(24*3600) * time;
+% 
+%     
+%     X= my_filter.S(1,:);
+%     Y = my_filter.S(2,:);
+%     
+%     real_one = deval(target, time);
+% 
+%     scatter(real_one(1), real_one(2), 20)
+%     hold on
+%     scatter(X,Y, 6, "filled")
+% 
+%     plot(earth(1,:), earth(2,:));
+%     scatter(6371*cos(gs_long), 6371*sin(gs_long), 5, "g");
+%     plot([6371*cos(gs_long), real_one(1)], [6371*sin(gs_long), real_one(2)])
+%     plot([6371*cos(gs_long + 2*pi/3), real_one(1)], [6371*sin(gs_long + 2*pi/3), real_one(2)])
+%     plot([6371*cos(gs_long + 4*pi/3), real_one(1)], [6371*sin(gs_long + 4*pi/3), real_one(2)])
+%     hold off
+%     xlim([real_one(1)-100, real_one(1)+100])
+%     ylim([real_one(2)-100, real_one(2)+100])
+%     % xlim([-2000, 10000])
+%     % ylim([-2000, 10000])
+%     daspect([1 1 1])
+%     drawnow
 end

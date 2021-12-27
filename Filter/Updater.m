@@ -2,18 +2,15 @@ classdef Updater
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
 
-
-    % Ground station position is not actually calculated!
     properties
         n_particles
         R
         R_inv
-        gs_location
         three_dimensional
     end
 
     methods
-        function obj = Updater(n_particles, ground_stations, three_dimensional)
+        function obj = Updater(n_particles, three_dimensional)
             %UNTITLED2 Construct an instance of this class
             %   Detailed explanation goes here
 
@@ -26,37 +23,27 @@ classdef Updater
             obj.n_particles = n_particles;
 
             obj.R = [];
-            obj.gs_location = [];
-            for i=1:length(ground_stations)
-                obj.R = blkdiag(obj.R, ground_stations{i}.R);
-                obj.gs_location = [obj.gs_location, ground_stations{i}.location];
-            end
 
             obj.R_inv = obj.R^(-1);
             obj.three_dimensional = three_dimensional;
         end
 
-        function [S, update_data] = update(obj, S_bar, real_obs, real_detection, time, predict_data)
+        function [S, filter_state] = update(obj, S_bar, real_obs, particle_obs, R, filter_state)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
-            if obj.three_dimensional
-                [weights, detected] = obj.obtain_3D_weights(S_bar, real_obs, real_detection, time);
-            else
-                [weights, detected] = obj.obtain_2D_weights(S_bar, real_obs, real_detection, time);
-            end
 
-            if detected 
-                S = obj.resample(S_bar, weights);
-            else 
+            if isempty(real_obs)
                 S = S_bar;
+
+            else
+                weights = obj.obtain_weights(real_obs, particle_obs, R);
+                S = obj.resample(S_bar, weights);
+                
             end
 
-            update_data = struct("detected", detected);
         end
 
-        function [weights, detected] = obtain_2D_weights(obj, S_bar, real_obs, real_detection, time)
-
-            [particle_obs, particle_detection] = get_2D_observations(obj.gs_location, S_bar, time);
+        function weights = obtain_weights(obj, real_obs, particle_obs, R)
            
 
             % One 3-dim for each ground station
@@ -74,57 +61,25 @@ classdef Updater
             % are set to 0, so they do not affect psi. R is the blkdiag of
             % the R of each ground station.
 
-            detected = (sum(real_detection) > 0);
 
-            Z = reshape(permute(particle_obs.*repmat(real_detection,2,obj.n_particles), [1,3,2]), [], obj.n_particles) - ...
-                repmat(reshape(real_obs.*real_detection, [], 1),1, obj.n_particles,1);
+            reshaped_real_obs = reshape(real_obs,[],1);
 
-            Z_mod = obj.R_inv * Z;
+            reshaped_particle_obs = reshape(permute(particle_obs, [1,3,2]),[],obj.n_particles);
+
+            Z = reshaped_particle_obs - repmat(reshaped_real_obs, 1, obj.n_particles);
+
+            Z_mod = linsolve(R,Z);
 
             delta = sum(reshape(reshape(Z,1, []) .* reshape(Z_mod,1,[]), [], obj.n_particles) ,1);
 
             % delta = sum(reshape(reshape(Z,1, 2*obj.n_particles) .* reshape(Z_mod,1,2*obj.n_particles), 2, obj.n_particles) ,1);
     
-            % TODO: Detrminant should be updated!!!
-
-            psi = (1/(2*pi*sqrt(det(obj.R))))*exp(-0.5*delta);
-
-            weights = psi/sum(psi);
-
-        end
-
-
-        function [weights, detected] = obtain_3D_weights(obj, S_bar, real_obs, real_detection, time)
-
-
-            [particle_obs, particle_detection] = get_3D_observations(obj.gs_location, S_bar, time);
-           
-
-            detected = (sum(real_detection) > 0);
-
-            Z = reshape(permute(particle_obs.*repmat(real_detection,3,obj.n_particles), [1,3,2]), [], obj.n_particles) - ...
-                repmat(reshape(real_obs.*real_detection, [], 1),1, obj.n_particles,1);
-
-            Z_mod = obj.R_inv * Z;
-
-            delta = sum(reshape(reshape(Z,1, []) .* reshape(Z_mod,1,[]), [], obj.n_particles) ,1);
-
             % TODO: Determinant should be updated!!!
 
             psi = (1/(2*pi*sqrt(det(obj.R))))*exp(-0.5*delta);
 
             weights = psi/sum(psi);
 
-        end
-
-
-        function [real_obs, real_detection] = get_target_measurement(obj, target, time)
-
-            if obj.three_dimensional
-                [real_obs, real_detection] = get_3D_observations(obj.gs_location, target, time);
-            else
-                [real_obs, real_detection] = get_2D_observations(obj.gs_location, target, time);
-            end
         end
 
 
