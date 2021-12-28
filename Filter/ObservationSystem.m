@@ -90,6 +90,9 @@ classdef ObservationSystem
             
 
             measurements = [round(distance, obj.rounding(1,1)); round(beta, obj.rounding(2,1))];
+
+            measurements = measurements + repmat(mvnrnd([0;0], diag([0.01, 0.000001]), n_particles)',1,1, n_active_gs);
+
             detection = radial_components >= 0;
 
         end

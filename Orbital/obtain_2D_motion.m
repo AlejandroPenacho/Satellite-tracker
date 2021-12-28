@@ -1,11 +1,11 @@
-function out = obtain_2D_motion(X_0, time_interval)
+function out = obtain_2D_motion(X_0, time_interval, mode)
 
     
     mu_earth = 398600;
 
+
     out = ode45(@(t,x) simple_2D_orbital_model(t,x, mu_earth), time_interval, X_0);
-    
-    
+
 end
 
 

@@ -4,10 +4,10 @@ addpath(genpath("."));
 
 IC = [12791; 0; 0; 0; 5.58*1.1*cos(0.3); 5.58*1.1*sin(0.3)];
 
-target = obtain_3D_motion(IC, [0; 20000]);
+target = obtain_3D_motion(IC, [0; 300000], [true, true]);
 
 distance_precision = 0.1; %km
-angle_precision = 0.00029; %rad, equal to 1 min
+angle_precision = 0.000029; %rad, equal to 6 sec (1 min is too low)
 
 
 ground_stations = { 
@@ -18,7 +18,8 @@ ground_stations = {
 
 dispersion_models = struct( ...
     "standard", eye(6)/1000, ...
-    "no_sight", diag([1/10000000000, 1/10000000000, 1/10000000000, 0, 0, 0]) ...
+    "no_sight", diag([1/10000000000, 1/10000000000, 1/10000000000, 0, 0, 0]), ...
+    "recovery", eye(6) ...
     );
 
 my_filter = ParticleFilter(10000, ...
@@ -35,16 +36,27 @@ for i=1:1000
 end
 
 
-figure
 
+
+for i=1:5665
+    my_filter = my_filter.step(1);
+    waitbar(i/5500)
+end
+
+figure
 for i=1:20000
 
     my_filter = my_filter.step(1);
 
     my_filter.plot_state();
-    xlim([-15000, 15000])
-    ylim([-15000, 15000])
-    zlim([-6000, 6000])
+
+    X = deval(my_filter.target, my_filter.time);
+    xlim([X(1) - 100, X(1) + 100])
+    ylim([X(2) - 100, X(2) + 100])
+    zlim([X(3) - 100, X(3) + 100])
+    % xlim([-15000, 15000])
+    % ylim([-15000, 15000])
+    % zlim([-6000, 6000])
     drawnow
 
 

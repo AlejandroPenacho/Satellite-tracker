@@ -31,7 +31,7 @@ classdef ParticleFilter
             obj.observation_system = ObservationSystem(three_dimensional, ground_stations);
             obj.updater = Updater(n_particles, three_dimensional);
 
-            obj.filter_state = struct("detected", true);
+            obj.filter_state = struct("detected", true, "time_since_detection", 0);
         end
         
         function obj = step(obj, delta_t)
@@ -45,6 +45,12 @@ classdef ParticleFilter
             [real_obs, real_detection] = obj.observation_system.get_measurements(X, obj.time);
 
             obj.filter_state.active_gs = reshape(real_detection,1,[]) == 1;
+
+            if sum(obj.filter_state.active_gs) > 0
+                obj.filter_state.time_since_detection = obj.filter_state.time_since_detection + 1;
+            else 
+                obj.filter_state.time_since_detection = 0;
+            end
 
             real_obs = real_obs(:,:,real_detection==1);
 

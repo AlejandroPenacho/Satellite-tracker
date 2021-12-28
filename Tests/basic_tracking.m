@@ -6,7 +6,8 @@ target = obtain_2D_motion([6791; 0; 0; 7.66*1.1], [0; 40000]);
 
 dispersion_models = struct( ...
     "standard", eye(4)/10, ...
-    "no_sight", zeros(4) ...
+    "no_sight", zeros(4), ...
+    "recovery", diag([1/10, 1/10, 1/10, 1/10]) ...
     );
 
 distance_precision = 0.1; %km
@@ -39,34 +40,14 @@ for i=1:40000
     my_filter = my_filter.step(1);
 
     my_filter.plot_state();
-    xlim([-10000, 10000])
-    ylim([-10000, 10000])
+
+    real_one = deval(target, my_filter.time);
+
+    xlim([real_one(1)-100, real_one(1)+100])
+    ylim([real_one(2)-100, real_one(2)+100])
+
+    % xlim([-10000, 10000])
+    % ylim([-10000, 10000])
     drawnow
-% 
-%     time = i;
-% 
-%     gs_long =  2*pi/(24*3600) * time;
-% 
-%     
-%     X= my_filter.S(1,:);
-%     Y = my_filter.S(2,:);
-%     
-%     real_one = deval(target, time);
-% 
-%     scatter(real_one(1), real_one(2), 20)
-%     hold on
-%     scatter(X,Y, 6, "filled")
-% 
-%     plot(earth(1,:), earth(2,:));
-%     scatter(6371*cos(gs_long), 6371*sin(gs_long), 5, "g");
-%     plot([6371*cos(gs_long), real_one(1)], [6371*sin(gs_long), real_one(2)])
-%     plot([6371*cos(gs_long + 2*pi/3), real_one(1)], [6371*sin(gs_long + 2*pi/3), real_one(2)])
-%     plot([6371*cos(gs_long + 4*pi/3), real_one(1)], [6371*sin(gs_long + 4*pi/3), real_one(2)])
-%     hold off
-%     xlim([real_one(1)-100, real_one(1)+100])
-%     ylim([real_one(2)-100, real_one(2)+100])
-%     % xlim([-2000, 10000])
-%     % ylim([-2000, 10000])
-%     daspect([1 1 1])
-%     drawnow
+
 end

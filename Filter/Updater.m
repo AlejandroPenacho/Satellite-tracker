@@ -68,15 +68,23 @@ classdef Updater
 
             Z = reshaped_particle_obs - repmat(reshaped_real_obs, 1, obj.n_particles);
 
-            Z_mod = linsolve(R,Z);
-
-            delta = sum(reshape(reshape(Z,1, []) .* reshape(Z_mod,1,[]), [], obj.n_particles) ,1);
-
-            % delta = sum(reshape(reshape(Z,1, 2*obj.n_particles) .* reshape(Z_mod,1,2*obj.n_particles), 2, obj.n_particles) ,1);
+            while true
+                Z_mod = linsolve(R,Z);
     
-            % TODO: Determinant should be updated!!!
+                delta = sum(reshape(reshape(Z,1, []) .* reshape(Z_mod,1,[]), [], obj.n_particles) ,1);
+    
+                % delta = sum(reshape(reshape(Z,1, 2*obj.n_particles) .* reshape(Z_mod,1,2*obj.n_particles), 2, obj.n_particles) ,1);
+        
+                % TODO: Determinant should be updated!!!
+    
+                psi = (1/(2*pi*sqrt(det(obj.R))))*exp(-0.5*delta);
 
-            psi = (1/(2*pi*sqrt(det(obj.R))))*exp(-0.5*delta);
+                if sum(psi > 10^(-5)) > 100
+                    break
+                else
+                    R = 10*R;
+                end
+            end
 
             weights = psi/sum(psi);
 
