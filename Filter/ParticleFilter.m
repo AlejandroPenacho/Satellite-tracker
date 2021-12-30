@@ -1,53 +1,82 @@
 classdef ParticleFilter
-    %PARTICLEFILTER Summary of this class goes here
-    %   Detailed explanation goes here
+    % Represents a particle filter, following a concrete satellite in Earth
+    % orbit. 
     
     properties
-        target
-        S
-        n_particles
-        time
-        filter_state
-        three_dimensional
-        observation_system
-        predictor
-        updater
+        target              % The solution of an ODE, providing state of the target at a given time
+        S                   % A DxN array with the state of the N particles, where the state has D dimensions
+        n_particles         % The number of particles the filter is using
+        time                % The current clock time of the filter, in seconds
+        filter_state        % An struct with some variables that the filter uses to tune itself
+        three_dimensional   % A boolean indicating whether 3- dimensions are bing used
+        observation_system  % The observation system used by the filter, that is, how measurements are obtained
+        predictor           % Updates the state of the particles using its own orbital motion model adding some uncertainty
+        updater             % Uses the real measurements to resample the particle set, so its distributions approaches the real one
     end
     
     methods
         function obj = ParticleFilter(n_particles, IC, three_dimensional, dispersion_models, ground_stations, target)
-            %PARTICLEFILTER Construct an instance of this class
-            %   Detailed explanation goes here
+            % Function used to create the filter
+
             obj.n_particles = n_particles;
             obj.three_dimensional = three_dimensional;
 
-            obj.S = repmat(IC,1,n_particles);
+            % There are different methods to initialize the particles 
+            obj.S = handle_IC(IC,n_particles);
 
             obj.time = 0;
 
             obj.target = target;
 
+            % The predictor, observations system and the updater are
+            % initialized
+
             obj.predictor = Predictor(n_particles, dispersion_models, three_dimensional);
             obj.observation_system = ObservationSystem(three_dimensional, ground_stations);
             obj.updater = Updater(n_particles, three_dimensional);
 
-            obj.filter_state = struct("detected", true, "time_since_detection", 0);
+            % Initialization of the filter_state
+            obj.filter_state = struct( ...
+                "detected", true, ...                               % Whether the target was seen in last measurement
+                "time_since_detection", 0, ...                      % Time since the last step with no detection
+                "active_gs", true(length(ground_stations),1), ...   % Which ground stations are currently seeing the target
+                "weight_variance", ones(1,obj.n_particles) ...      % Variance of the weights of the particles in the resampling
+                );
+        end
+
+        function [state, covariance] = get_estimation(obj)
+
+            % Provides the estimated state and the covariance of this
+            % estimation of the target
+
+            state = sum(obj.S,2)/obj.n_particles;
+            delta = obj.S - repmat(state,1,obj.n_particles);
+            covariance = delta*delta'/obj.n_particles;
         end
         
-        function obj = step(obj, delta_t)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
+        function obj = step(obj, delta_t, real_obs, real_detection)
+            % One step of the filter, using prediction and update to obtain
+            % a new set of particles tracking the target.
             
-            obj.time = obj.time + delta_t;
-            X = deval(obj.target, obj.time);
-            
+            % If the measurements of the target are not provided, they can
+            % be obtained from the internal "target" variable, and using
+            % the observational system of the particle.
+            if nargin == 2
+                obj.time = obj.time + delta_t;
+                X = deval(obj.target, obj.time);
 
-            [real_obs, real_detection] = obj.observation_system.get_measurements(X, obj.time);
+                [real_obs, real_detection] = obj.observation_system.get_measurements(X, obj.time);
+            end
+
+            % The ground stations actively detecting the target are
+            % inserted in the filter state, in order to be used for other
+            % operations
 
             obj.filter_state.active_gs = reshape(real_detection,1,[]) == 1;
 
+            % Update the time since detection of the filter
             if sum(obj.filter_state.active_gs) > 0
-                obj.filter_state.time_since_detection = obj.filter_state.time_since_detection + 1;
+                obj.filter_state.time_since_detection = obj.filter_state.time_since_detection + delta_t;
             else 
                 obj.filter_state.time_since_detection = 0;
             end
@@ -55,8 +84,7 @@ classdef ParticleFilter
             real_obs = real_obs(:,:,real_detection==1);
 
             [S_bar, obj.filter_state] = obj.predictor.predict(obj.S, delta_t, obj.filter_state);
-            
-            
+
 
             [particle_obs, ~] = obj.observation_system.get_measurements(S_bar, obj.time, obj.filter_state.active_gs);
            

@@ -1,6 +1,7 @@
 classdef Updater
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    % Represents the update operation of the filter, taking the set of
+    % particles S_bar and the measurements from the ground stations. Then,
+    % it uses them in order to obtain a new set of particles S.
 
     properties
         n_particles
@@ -37,6 +38,7 @@ classdef Updater
 
             else
                 weights = obj.obtain_weights(real_obs, particle_obs, R);
+                filter_state.weight_variance = sum((weights- 1/obj.n_particles).^2)/obj.n_particles;
                 S = obj.resample(S_bar, weights);
                 
             end
@@ -67,6 +69,7 @@ classdef Updater
             reshaped_particle_obs = reshape(permute(particle_obs, [1,3,2]),[],obj.n_particles);
 
             Z = reshaped_particle_obs - repmat(reshaped_real_obs, 1, obj.n_particles);
+            Z(2:end,:) = mod(Z(2:end,:) + pi, 2*pi) - pi;
 
             while true
                 Z_mod = linsolve(R,Z);
