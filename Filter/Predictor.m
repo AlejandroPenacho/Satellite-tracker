@@ -34,15 +34,24 @@ classdef Predictor
             % Given the current set of particles and a delta_t, update the 
             % state of the particles
 
-            if sum(filter_state.active_gs) == 0
-                Q = obj.dispersion_models.no_sight;
-                
-            elseif filter_state.time_since_detection <= 20
-                Q = obj.dispersion_models.recovery;
 
-            else
-                Q = obj.dispersion_models.standard;
+            switch filter_state.detection_status
+
+                case "first_contact"
+                    Q = obj.dispersion_models.first_contact;
+
+                case "no_sight"
+                    Q = obj.dispersion_models.no_sight;
+
+                case "recovery"
+                    Q = obj.dispersion_models.recovery;
+
+                case "normal_contact"
+                    Q = obj.dispersion_models.standard;
+                otherwise
+                    error("Invalid detection status")
             end
+
 
             if ~obj.three_dimensional
                 force_factor = obj.mu_earth ./ (S(1,:).^2+S(2,:).^2).^(3/2);

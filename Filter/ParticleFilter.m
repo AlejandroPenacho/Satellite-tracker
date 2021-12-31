@@ -37,10 +37,11 @@ classdef ParticleFilter
 
             % Initialization of the filter_state
             obj.filter_state = struct( ...
-                "detected", true, ...                               % Whether the target was seen in last measurement
+                "detected", false, ...                               % Whether the target was seen in last measurement
                 "time_since_detection", 0, ...                      % Time since the last step with no detection
                 "active_gs", true(length(ground_stations),1), ...   % Which ground stations are currently seeing the target
-                "weight_variance", ones(1,obj.n_particles) ...      % Variance of the weights of the particles in the resampling
+                "weight_variance", ones(1,obj.n_particles), ...     % Variance of the weights of the particles in the resampling
+                "detection_status", "first_contact" ...
                 );
         end
 
@@ -75,11 +76,14 @@ classdef ParticleFilter
             obj.filter_state.active_gs = reshape(real_detection,1,[]) == 1;
 
             % Update the time since detection of the filter
+
             if sum(obj.filter_state.active_gs) > 0
                 obj.filter_state.time_since_detection = obj.filter_state.time_since_detection + delta_t;
             else 
                 obj.filter_state.time_since_detection = 0;
             end
+
+            obj.filter_state.detection_status = obj.update_detection_status();
 
             real_obs = real_obs(:,:,real_detection==1);
 
@@ -91,6 +95,21 @@ classdef ParticleFilter
             R = obj.observation_system.get_R(obj.filter_state.active_gs);
 
             [obj.S, obj.filter_state] = obj.updater.update(S_bar, real_obs, particle_obs, R, obj.filter_state);
+        end
+
+        function detection_status = update_detection_status(obj)
+            if obj.filter_state.time_since_detection > 20
+                detection_status = "normal_contact";
+            elseif obj.filter_state.time_since_detection > 0
+                if obj.filter_state.detection_status == "first_contact"
+                    detection_status = "first_contact";
+                else
+                    detection_status = "recovery";
+                end
+            else
+                detection_status = "no_sight";
+            end
+                        
         end
 
         function plot_state(obj)
