@@ -53,6 +53,7 @@ classdef ObservationSystem
             end
         end
 
+
         function [measurements, detection] = get_2D_observations(obj, particles, time, active_gs)
 
 
@@ -115,7 +116,7 @@ classdef ObservationSystem
         
             n_active_gs = sum(active_gs);
 
-            i_earth = 0;            %Real: 0.4
+            i_earth = 0.4;            %Real: 0.4
             earth_radius = 6371;
         
             gs_lat = obj.gs_location(1,active_gs);
@@ -161,7 +162,29 @@ classdef ObservationSystem
             detection = (radial_components >= 0);
         end
 
+        function T = obtain_transform_matrix(obj, psi, theta, i)
+            % Matrix that goes from from ground station centered frame to
+            % Earth centered frame
 
+            if nargin == 2
+                % Two dimensions
+                T = [cos(psi), -sin(psi); sin(psi), cos(psi)];
+            else
+                % Three dimensions
+                T = [
+                    cos(theta).*cos(psi), -sin(psi), -sin(theta).*cos(psi);
+                    cos(i).*cos(theta).*sin(psi) - sin(i).*sin(theta), cos(i).*cos(psi), -cos(i).*sin(theta).*sin(psi) - sin(i).*cos(theta);
+                    sin(i).*cos(theta).*sin(psi) + cos(i).*sin(theta), cos(i).*cos(psi), -sin(i).*sin(theta).*sin(psi) + cos(i).*cos(theta)
+                ];
+            end
+        end
+
+        function C = get_C(obj, x)
+            C = [];
+            if obj.three_dimensional
+                T = obj.obtain_transform_matrix();
+            end
+        end
 
     end
 end

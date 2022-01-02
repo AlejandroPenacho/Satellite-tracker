@@ -55,7 +55,7 @@ classdef ParticleFilter
             covariance = delta*delta'/obj.n_particles;
         end
         
-        function obj = step(obj, delta_t, real_obs, real_detection)
+        function obj = step(obj, delta_t, skip_update, real_obs, real_detection)
             % One step of the filter, using prediction and update to obtain
             % a new set of particles tracking the target.
             
@@ -67,6 +67,14 @@ classdef ParticleFilter
                 X = deval(obj.target, obj.time);
 
                 [real_obs, real_detection] = obj.observation_system.get_measurements(X, obj.time);
+                skip_update = false;
+            end
+
+            if skip_update
+                obj.filter_state.time_since_detection = 0;
+                obj.filter_state.detection_status = obj.update_detection_status();
+                [obj.S, obj.filter_state] = obj.predictor.predict(obj.S, delta_t, obj.filter_state);
+                return
             end
 
             % The ground stations actively detecting the target are
