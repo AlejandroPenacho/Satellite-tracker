@@ -2,9 +2,9 @@ clc; clear; close all
 
 addpath(genpath("."));
 
-target_0 = [6791; 0; 0; 7.66*1.1];
-target_1 = [-4500; 5362; -5.78; 4.85094];
-target_2 = [4500; -5362; 5.78; -4.85094]; 
+target_0 = [6791; 0; 0; 7.66];
+target_1 = [-4500; 5362; -5.78; -4.85094];
+target_2 = [4500; -5362; 5.78; 4.85094]; 
 
 
 targets = {
@@ -30,7 +30,7 @@ ground_stations = {
     };
 
 
-multitarget = MultitargetFilter(1000, false, dispersion_models, ground_stations, targets);
+multitarget = MultitargetFilter(5000, false, dispersion_models, ground_stations, targets);
 
 IC0 = struct("X", target_0, "cov", diag([5,5,0.1,0.1]), "mode", "normal");
 IC1 = struct("X", target_1, "cov", diag([5,5,0.1,0.1]), "mode", "normal");
@@ -43,5 +43,14 @@ IC2 = struct("X", target_2, "cov", diag([5,5,0.1,0.1]), "mode", "normal");
 %     ParticleFilter(10000, IC2, false, dispersion_models, ground_stations, false)
 % };
 
-multitarget = multitarget.step(1);
-multitarget = multitarget.step(1);
+figure
+
+for i=1:10000
+    multitarget = multitarget.step(1);
+    multitarget.plot();
+
+    daspect([1 1 1])
+    xlim([6000, 7000])
+    ylim([-200, 5000])
+    drawnow
+end

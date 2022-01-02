@@ -82,7 +82,7 @@ classdef Updater
     
                 psi = (1/(2*pi*sqrt(det(obj.R))))*exp(-0.5*delta);
 
-                if sum(psi > 10^(-5)) > 100
+                if sum(psi > 10^(-3)) > 100
                     break
                 else
                     R = 10*R;

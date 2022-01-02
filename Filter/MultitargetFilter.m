@@ -29,7 +29,7 @@ classdef MultitargetFilter
         
         function obj = step(obj, delta_t)
 
-            p_threshold = 0.001;
+            p_threshold = 0.00001;
 
             obj.time = obj.time + delta_t;
 
@@ -39,20 +39,22 @@ classdef MultitargetFilter
             filter_ref = 1:length(obj.current_filters);
 
             for i = 1:size(observations,2)
+                if sum(sum(detection_array(:,i,:))) == 0
+                    continue
+                end
+
                 [best_p_index, best_p] = obj.get_best_fit(observations(:,i,:), detection_array(:,i,:), target_measurements, sigmas, filter_ref);
                 if best_p > p_threshold && ~isempty(filter_ref)
                     filter_index = filter_ref(best_p_index);
-                    obj.current_filters{filter_index}.step(delta_t, false, observations(:,i,:), detection_array(:,i,:));
+                    obj.current_filters{filter_index} = obj.current_filters{filter_index}.step(delta_t, false, observations(:,i,:), detection_array(:,i,:));
                     filter_ref(best_p_index) = [];
                 else
-                    if sum(sum(detection_array(:,i,:))) > 0
-                        obj.current_filters{end+1} = obj.create_new_filter(observations(:,i,:), detection_array(:,i,:));
-                    end
+                    obj.current_filters{end+1} = obj.create_new_filter(observations(:,i,:), detection_array(:,i,:));
                 end
             end
 
             for j=1:length(filter_ref)
-                obj.current_filters(filter_ref(j)).step(delta_t, true);
+                obj.current_filters{filter_ref(j)} = obj.current_filters{filter_ref(j)}.step(delta_t, true);
             end
 
         end
@@ -107,6 +109,8 @@ classdef MultitargetFilter
                             "mode", "2d-start");
                 filter = ParticleFilter(obj.std_filter.n_particles, IC, false, obj.std_filter.dispersion_models, obj.ground_stations, false);                
             end
+
+            filter.time = obj.time;
         end
 
         function [observations, detection_array] = generate_real_observations(obj)
@@ -167,7 +171,8 @@ classdef MultitargetFilter
             best_psi = 0;
             best_index = 0;
 
-            f_sigma = diag([50, 0.01]);
+            f_sigma = diag([50, 0.1]);
+            % f_sigma = diag([0.01, 0.01]);
 
             for i=1:length(filter_ref)
                 filter_index = filter_ref(i);
@@ -186,6 +191,41 @@ classdef MultitargetFilter
             end
 
         end
+
+        function plot(obj)
+            if obj.three_dimensional
+                error("No plot in 3-D")
+            end
+
+            % Earth
+
+            earth = zeros(2,1001);
+            for i=1:1001
+                earth(:,i) = 6371*[cos(i*2*pi/1000); sin(2*pi*i/1000)];
+            end
+
+            plot(earth(1,:), earth(2,:), "color", [0.6863, 0.3690, 0], "LineWidth", 1.5)
+
+            hold on
+
+            % Real objects
+            for i=1:length(obj.targets)
+                if obj.time >= obj.targets{i}.detection_time
+                    X = deval(obj.targets{i}.solved_ode, obj.time);
+                    scatter(X(1), X(2), 20, [0.4940, 0.1840, 0.5560])
+                end
+            end
+
+            % Estimations
+
+            for i=1:length(obj.current_filters)
+                scatter(obj.current_filters{i}.S(1,:), obj.current_filters{i}.S(2,:), 6, [0, 0.4470, 0.7410], "filled")
+            end
+
+            hold off
+
+        end
+
     end
 end
 

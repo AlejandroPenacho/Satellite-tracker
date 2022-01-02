@@ -62,8 +62,10 @@ classdef ParticleFilter
             % If the measurements of the target are not provided, they can
             % be obtained from the internal "target" variable, and using
             % the observational system of the particle.
+
+            obj.time = obj.time + delta_t;
+
             if nargin == 2
-                obj.time = obj.time + delta_t;
                 X = deval(obj.target, obj.time);
 
                 [real_obs, real_detection] = obj.observation_system.get_measurements(X, obj.time);
@@ -207,6 +209,29 @@ classdef ParticleFilter
 
                 hold off
             end
+        end
+
+        function plot_in_multi(obj, X)
+            if obj.three_dimensional
+                error("No multitarget in 2-D")
+            end
+            for i=1:obj.observation_system.n_gs
+               gs_longitude = obj.observation_system.gs_location(i) + 2*pi/(24*3600) * obj.time;
+            
+               if obj.filter_state.active_gs(i)
+                   color = [0.4660, 0.6740, 0.1880];
+               else
+                   color = [0.6350, 0.0780, 0.1840];
+               end
+            
+               scatter(6371*cos(gs_longitude), 6371*sin(gs_longitude), 30, color, "filled");
+               plot([6371*cos(gs_longitude), X(1)], [6371*sin(gs_longitude), X(2)], "color", color);
+            end
+            
+            % Particles
+            scatter(obj.S(1,:), obj.S(2,:), 6, [0, 0.4470, 0.7410], "filled")           
+
+
         end
     end
 end
