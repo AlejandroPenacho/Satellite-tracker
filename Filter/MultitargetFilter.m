@@ -165,13 +165,17 @@ classdef MultitargetFilter
 
             target_measurements = target_measurements(:,:,detection_array);
             observation = observation(:,:,detection_array);
+
+            z = target_measurements - repmat(observation,1,n_targets);
     
-            z = reshape(permute(target_measurements,[1,3,2]),[],n_targets) - repmat(reshape(observation,[],1),1,n_targets);
+            z(2,:,:) = mod(z(2,:,:) + pi, 2*pi) - pi;
+
+            z = reshape(permute(z,[1,3,2]),[],n_targets);
 
             best_psi = 0;
             best_index = 0;
 
-            f_sigma = diag([50, 0.1]);
+            f_sigma = diag([300000, 0.05]);
             % f_sigma = diag([0.01, 0.01]);
 
             for i=1:length(filter_ref)

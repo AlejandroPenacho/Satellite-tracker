@@ -64,12 +64,25 @@ classdef Updater
             % the R of each ground station.
 
 
-            reshaped_real_obs = reshape(real_obs,[],1);
+            Z = particle_obs - repmat(real_obs,1, obj.n_particles);
+    
+            Z(2,:,:) = mod(Z(2,:,:) + pi, 2*pi) - pi;
 
-            reshaped_particle_obs = reshape(permute(particle_obs, [1,3,2]),[],obj.n_particles);
+            Z = reshape(permute(Z,[1,3,2]),[], obj.n_particles);
 
-            Z = reshaped_particle_obs - repmat(reshaped_real_obs, 1, obj.n_particles);
-            Z(2:end,:) = mod(Z(2:end,:) + pi, 2*pi) - pi;
+
+
+            % reshaped_real_obs = reshape(real_obs,[],1);
+
+            % reshaped_particle_obs = reshape(permute(particle_obs, [1,3,2]),[],obj.n_particles);
+
+            % Z = reshaped_particle_obs - repmat(reshaped_real_obs, 1, obj.n_particles);
+            % Z(2:end,:) = mod(Z(2:end,:) + pi, 2*pi) - pi;
+
+
+
+
+
 
             while true
                 Z_mod = linsolve(R,Z);
@@ -82,7 +95,7 @@ classdef Updater
     
                 psi = (1/(2*pi*sqrt(det(obj.R))))*exp(-0.5*delta);
 
-                if sum(psi > 10^(-3)) > 100
+                if sum(psi > 10^(-2)) > 100
                     break
                 else
                     R = 10*R;
