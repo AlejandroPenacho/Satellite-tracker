@@ -40,7 +40,7 @@ classdef ParticleFilter
                 "detected", false, ...                               % Whether the target was seen in last measurement
                 "time_since_detection", 0, ...                      % Time since the last step with no detection
                 "active_gs", true(length(ground_stations),1), ...   % Which ground stations are currently seeing the target
-                "weight_variance", ones(1,obj.n_particles), ...     % Variance of the weights of the particles in the resampling
+                "mean_mahalanobis", 10000, ...                      % Variance of the weights of the particles in the resampling
                 "detection_status", "first_contact" ...
                 );
         end
@@ -108,7 +108,14 @@ classdef ParticleFilter
         end
 
         function detection_status = update_detection_status(obj)
-            if obj.filter_state.time_since_detection > 20
+
+            if obj.three_dimensional
+                mahalanobis_transition = 200;
+            else
+                mahalanobis_transition = 100;
+            end
+
+            if obj.filter_state.mean_mahalanobis < mahalanobis_transition
                 detection_status = "normal_contact";
             elseif obj.filter_state.time_since_detection > 0
                 if obj.filter_state.detection_status == "first_contact"

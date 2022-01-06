@@ -37,15 +37,15 @@ classdef Updater
                 S = S_bar;
 
             else
-                weights = obj.obtain_weights(real_obs, particle_obs, R);
-                filter_state.weight_variance = sum((weights- 1/obj.n_particles).^2)/obj.n_particles;
+                [weights, mean_mahalanobis] = obj.obtain_weights(real_obs, particle_obs, R);
+                filter_state.mean_mahalanobis = mean_mahalanobis;
                 S = obj.resample(S_bar, weights);
                 
             end
 
         end
 
-        function weights = obtain_weights(obj, real_obs, particle_obs, R)
+        function [weights, mean_mahalanobis] = obtain_weights(obj, real_obs, particle_obs, R)
            
 
             % One 3-dim for each ground station
@@ -80,9 +80,7 @@ classdef Updater
             % Z(2:end,:) = mod(Z(2:end,:) + pi, 2*pi) - pi;
 
 
-
-
-
+            first_iteration = true;
 
             while true
                 Z_mod = linsolve(R,Z);
@@ -94,6 +92,11 @@ classdef Updater
                 % TODO: Determinant should be updated!!!
     
                 psi = (1/(2*pi*sqrt(det(obj.R))))*exp(-0.5*delta);
+
+                if first_iteration
+                    mean_mahalanobis = mean(sqrt(delta));
+                    first_iteration = false;
+                end
 
                 if sum(psi > 10^(-2)) > 100
                     break
