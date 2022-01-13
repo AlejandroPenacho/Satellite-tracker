@@ -223,7 +223,8 @@ classdef MultitargetFilter
             % Estimations
 
             for i=1:length(obj.current_filters)
-                scatter(obj.current_filters{i}.S(1,:), obj.current_filters{i}.S(2,:), 6, [0, 0.4470, 0.7410], "filled")
+                obj.current_filters{i}.plot_in_multi();
+                % scatter(obj.current_filters{i}.S(1,:), obj.current_filters{i}.S(2,:), 6, [0, 0.4470, 0.7410], "filled")
             end
 
             hold off

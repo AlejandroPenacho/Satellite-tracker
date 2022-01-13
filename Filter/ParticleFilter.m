@@ -40,7 +40,7 @@ classdef ParticleFilter
                 "detected", false, ...                               % Whether the target was seen in last measurement
                 "time_since_detection", 0, ...                      % Time since the last step with no detection
                 "active_gs", true(length(ground_stations),1), ...   % Which ground stations are currently seeing the target
-                "mean_mahalanobis", 10000, ...                      % Variance of the weights of the particles in the resampling
+                "mean_mahalanobis", 10000, ...                      % Mean mahalanobis distance, initialization value
                 "detection_status", "first_contact" ...
                 );
         end
@@ -76,6 +76,7 @@ classdef ParticleFilter
                 obj.filter_state.time_since_detection = 0;
                 obj.filter_state.detection_status = obj.update_detection_status();
                 [obj.S, obj.filter_state] = obj.predictor.predict(obj.S, delta_t, obj.filter_state);
+                obj.filter_state.active_gs = false(1, obj.observation_system.n_gs);
                 return
             end
 
@@ -220,7 +221,7 @@ classdef ParticleFilter
 
         function plot_in_multi(obj, X)
             if obj.three_dimensional
-                error("No multitarget in 2-D")
+                error("No multitarget in 3-D")
             end
             for i=1:obj.observation_system.n_gs
                gs_longitude = obj.observation_system.gs_location(i) + 2*pi/(24*3600) * obj.time;
@@ -230,6 +231,8 @@ classdef ParticleFilter
                else
                    color = [0.6350, 0.0780, 0.1840];
                end
+
+               [X, ~] = obj.get_estimation();
             
                scatter(6371*cos(gs_longitude), 6371*sin(gs_longitude), 30, color, "filled");
                plot([6371*cos(gs_longitude), X(1)], [6371*sin(gs_longitude), X(2)], "color", color);

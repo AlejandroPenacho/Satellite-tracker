@@ -49,8 +49,11 @@ for i=1:10000
     multitarget = multitarget.step(1);
     multitarget.plot();
 
+    xlabel("X (km)")
+    ylabel("Y (km)")
     daspect([1 1 1])
     xlim([-8000, 8000])
     ylim([-8000, 8000])
+    set(gca, "FontSize", 15)
     drawnow
 end

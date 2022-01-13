@@ -1,4 +1,0 @@
-function profiler()
-    threeD
-end
-
